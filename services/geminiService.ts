@@ -4,12 +4,31 @@ import { SleepSession, ChatMessage, UserProfile } from "../types";
 const getAIClient = () => {
   let apiKey = '';
   try {
-    // Check if we are in a Node-like environment with process defined
-    if (typeof process !== 'undefined' && process.env) {
-      apiKey = process.env.API_KEY || '';
-    }
+      // Preferred: Vite env variable
+      // @ts-ignore
+      if (import.meta.env && import.meta.env.VITE_GEMINI_API_KEY) {
+        // @ts-ignore
+        apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+      } 
+      // Fallback: Define replacement
+      // @ts-ignore
+      else if (typeof process !== 'undefined' && process.env.GEMINI_API_KEY) {
+        // @ts-ignore
+        apiKey = process.env.GEMINI_API_KEY;
+      }
+      
+      console.log("GeminiService: API Key resolved:", apiKey ? "YES (Length: " + apiKey.length + ")" : "NO");
+      
+      // Temporary: Verify the key being used (first 4 chars) to check if it's the placeholder
+      if (apiKey) {
+        console.log("GeminiService: Key starts with:", apiKey.substring(0, 4) + "...");
+        if (apiKey === "AIzaSyCS6lhG5psUEmccnB9CSaZa5eXNRnozbIE") {
+           console.error("GeminiService: DETECTED PLACEHOLDER KEY. This key will likely fail.");
+        }
+      }
+
   } catch (e) {
-    console.error("Error accessing process.env:", e);
+    console.error("Error accessing environment variables:", e);
   }
 
   if (!apiKey) {
@@ -45,7 +64,7 @@ export const analyzeUserProfile = async (profile: UserProfile): Promise<string> 
     `;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-2.5-flash',
       config: {
         responseMimeType: 'text/plain'
       },
@@ -62,7 +81,11 @@ export const analyzeUserProfile = async (profile: UserProfile): Promise<string> 
     if (errorMessage.includes("API_KEY_MISSING")) {
       return "Configuration Error: API Key is missing. Please check your environment variables.";
     }
-    return "Service Error: The AI service is currently experiencing issues. Please try again later.";
+    if (errorMessage.includes("429")) {
+      return "Rate Limit Exceeded: The AI service is verified but busy options. Please try again in a minute.";
+    }
+    // Debugging: Return actual error
+    return `AI Service Error: ${errorMessage}`;
   }
 };
 
@@ -105,15 +128,15 @@ export const analyzeSleepSession = async (session: SleepSession, userProfile?: U
     `;
 
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-2.5-flash',
       contents: { parts: [{ text: prompt }] },
     });
 
     let text = response.text || "Unable to generate analysis at this time.";
     return text.replace(/\*/g, '');
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error analyzing sleep:", error);
-    return "Analysis unavailable. Please ensure your API key is valid.";
+    return `Analysis Error: ${error?.message || "Check API Key"}`;
   }
 };
 
@@ -132,7 +155,7 @@ export const getSleepCoachChat = async (history: ChatMessage[], newMessage: stri
     `;
 
     const chat = ai.chats.create({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-2.5-flash',
       config: {
         systemInstruction,
       },
@@ -145,9 +168,9 @@ export const getSleepCoachChat = async (history: ChatMessage[], newMessage: stri
     const result = await chat.sendMessage({ message: newMessage });
     let text = result.text || "I'm having trouble thinking right now. Try again later.";
     return text.replace(/\*/g, '');
-  } catch (error) {
+  } catch (error: any) {
     console.error("Chat error:", error);
-    return "I am currently offline due to a connection issue. Please check your API key.";
+    return `Chat Error: ${error?.message || "Connection failed"}`;
   }
 };
 
@@ -156,7 +179,7 @@ export const interpretDream = async (dreamText: string): Promise<{ interpretatio
     const ai = getAIClient();
     
     const response = await ai.models.generateContent({
-      model: 'gemini-3-flash-preview',
+      model: 'gemini-2.5-flash',
       contents: { parts: [{ text: `Interpret this dream from a psychological perspective (Jungian/Freudian mix) but keep it light and insightful. Also extract 3 key themes.
       
       Dream: "${dreamText}"` }] },
@@ -176,11 +199,11 @@ export const interpretDream = async (dreamText: string): Promise<{ interpretatio
     const jsonText = response.text;
     if (!jsonText) throw new Error("No response text");
     return JSON.parse(jsonText);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Dream interpretation error:", error);
     return { 
-      interpretation: "Could not interpret dream at this moment.", 
-      themes: ["Unknown"] 
+      interpretation: `Dream Error: ${error?.message || "Available"}`, 
+      themes: ["Error"] 
     };
   }
 };
