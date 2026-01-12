@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { UserProfile } from '../types';
-import { ArrowRight, Check, Coffee, Moon, User, Smartphone, Clock, AlertCircle, X } from 'lucide-react';
+import { ArrowRight, Check, Coffee, Moon, User, Smartphone, Clock, AlertCircle, X, Star, Utensils, Wine, Dumbbell, Bed, Activity } from 'lucide-react';
 
 interface OnboardingQuizProps {
   onComplete: (profile: UserProfile) => void;
@@ -16,7 +16,23 @@ const OnboardingQuiz: React.FC<OnboardingQuizProps> = ({ onComplete, onCancel })
     screenTime: '',
     typicalBedtimeRoutine: [],
     averageSleepDuration: '',
-    sleepIssues: []
+    sleepIssues: [],
+    // initialize new fields
+    sleepLastNightHours: '',
+    sleepLastNightMinutes: '',
+    sleepQuality: '',
+    currentFeeling: '',
+    caffeineYesterday: '',
+    caffeineLastCup: '',
+    caffeineTotalIntake: '',
+    alcoholYesterday: '',
+    alcoholCloseToBed: '',
+    ateWithin3Hours: '',
+    mealType: '',
+    workoutToday: '',
+    workoutIntensity: '',
+    workoutTiming: '',
+    sleepEnvironment: []
   });
 
   const handleNext = () => {
@@ -27,9 +43,9 @@ const OnboardingQuiz: React.FC<OnboardingQuizProps> = ({ onComplete, onCancel })
     setProfile(prev => ({ ...prev, [key]: value }));
   };
 
-  const toggleArrayItem = (key: 'typicalBedtimeRoutine' | 'sleepIssues', item: string) => {
+  const toggleArrayItem = (key: 'typicalBedtimeRoutine' | 'sleepIssues' | 'sleepEnvironment', item: string) => {
     setProfile(prev => {
-      const current = prev[key];
+      const current = prev[key] || []; // Ensure current is defined (it's optional in types)
       if (current.includes(item)) {
         return { ...prev, [key]: current.filter(i => i !== item) };
       } else {
@@ -78,29 +94,311 @@ const OnboardingQuiz: React.FC<OnboardingQuizProps> = ({ onComplete, onCancel })
       ),
       isValid: !!profile.gender
     },
-    // Q3: Caffeine
+    // Q3.1: Sleep Last Night
     {
-      title: "Daily Caffeine Intake?",
-      icon: <Coffee className="w-6 h-6 text-orange-500" />,
+      title: "How long did you sleep last night?",
+      icon: <Clock className="w-6 h-6 text-indigo-500" />,
       content: (
-        <div className="space-y-3">
-          {['None', '1 Cup', '2-3 Cups', '4+ Cups'].map(opt => (
+        <div>
+          <div className="flex gap-3">
+            <input
+              type="number"
+              min={0}
+              value={profile.sleepLastNightHours}
+              onChange={e => updateProfile('sleepLastNightHours', e.target.value)}
+              placeholder="Hours"
+              className="w-1/2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 dark:text-white focus:ring-2 focus:ring-nebula outline-none text-lg"
+              autoFocus
+            />
+            <input
+              type="number"
+              min={0}
+              max={59}
+              value={profile.sleepLastNightMinutes}
+              onChange={e => updateProfile('sleepLastNightMinutes', e.target.value)}
+              placeholder="Minutes"
+              className="w-1/2 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl px-4 py-3 dark:text-white focus:ring-2 focus:ring-nebula outline-none text-lg"
+            />
+          </div>
+        </div>
+      ),
+      isValid: profile.sleepLastNightHours !== '' && profile.sleepLastNightMinutes !== ''
+    },
+    // Q3.2: Sleep Quality
+    {
+      title: "How was your sleep quality?",
+      icon: <Star className="w-6 h-6 text-yellow-500" />,
+      content: (
+        <div>
+           <p className="text-center text-slate-500 mb-4 text-sm">Scale of 1 (Worst) to 10 (Best)</p>
+           <div className="grid grid-cols-5 gap-3">
+              {Array.from({ length: 10 }, (_, i) => (i + 1).toString()).map(num => (
+                <button
+                  key={num}
+                  onClick={() => updateProfile('sleepQuality', num)}
+                  className={`p-3 rounded-xl border text-lg font-medium transition-all ${
+                    profile.sleepQuality === num ? 'bg-yellow-50 dark:bg-yellow-900/20 border-yellow-500 text-yellow-700' : 'border-slate-200 dark:border-slate-700 text-slate-600 hover:bg-slate-50'
+                  }`}
+                >
+                  {num}
+                </button>
+              ))}
+            </div>
+        </div>
+      ),
+      isValid: !!profile.sleepQuality
+    },
+    // Q3.3: Current Feeling
+    {
+      title: "How do you feel right now?",
+      icon: <Activity className="w-6 h-6 text-pink-500" />,
+      content: (
+        <div className="grid grid-cols-1 gap-3">
+          {['Exhausted (Brain fog)', 'Alert but tired (Physical fatigue)', 'Fully refreshed'].map(opt => (
             <button
               key={opt}
-              onClick={() => updateProfile('dailyCaffeine', opt)}
-              className={`w-full p-4 rounded-xl border flex items-center justify-between transition-all ${
-                profile.dailyCaffeine === opt 
-                  ? 'bg-orange-50 dark:bg-orange-900/20 border-orange-500 text-orange-700 dark:text-orange-300' 
-                  : 'border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800'
+              onClick={() => updateProfile('currentFeeling', opt)}
+              className={`p-4 rounded-xl border text-left transition-all flex items-center justify-between ${
+                profile.currentFeeling === opt ? 'bg-pink-50 dark:bg-pink-900/20 border-pink-500 text-pink-700' : 'border-slate-200 dark:border-slate-700 text-slate-600 hover:bg-slate-50'
               }`}
             >
               <span>{opt}</span>
-              {profile.dailyCaffeine === opt && <Check className="w-5 h-5 text-orange-500" />}
+              {profile.currentFeeling === opt && <Check className="w-5 h-5 text-pink-500" />}
             </button>
           ))}
         </div>
       ),
-      isValid: !!profile.dailyCaffeine
+      isValid: !!profile.currentFeeling
+    },
+    // Q3.4: Caffeine
+    {
+      title: "Did you consume caffeine yesterday?",
+      icon: <Coffee className="w-6 h-6 text-orange-500" />,
+      content: (
+        <div className="space-y-4">
+          <div className="flex gap-3">
+            {['Yes', 'No'].map(opt => (
+              <button
+                key={opt}
+                onClick={() => updateProfile('caffeineYesterday', opt)}
+                className={`flex-1 p-4 rounded-xl border transition-all font-medium ${
+                  profile.caffeineYesterday === opt ? 'bg-orange-50 dark:bg-orange-900/20 border-orange-500 text-orange-700' : 'border-slate-200 dark:border-slate-700 text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                {opt}
+              </button>
+            ))}
+          </div>
+
+          {profile.caffeineYesterday === 'Yes' && (
+            <div className="space-y-4 animate-fade-in">
+              <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">When was your last cup?</label>
+                  <div className="grid grid-cols-1 gap-2">
+                    {['Morning', 'Afternoon', 'Within 6hrs of bed'].map(opt => (
+                      <button
+                        key={opt}
+                        onClick={() => updateProfile('caffeineLastCup', opt)}
+                        className={`p-2 rounded-lg border text-sm transition-all text-left px-3 ${
+                          profile.caffeineLastCup === opt ? 'bg-white dark:bg-slate-700 border-orange-500 ring-1 ring-orange-500 text-orange-700 dark:text-orange-300' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600'
+                        }`}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Total intake?</label>
+                  <div className="flex gap-2">
+                    {['1 cup', '2–3 cups', '4+'].map(opt => (
+                      <button
+                        key={opt}
+                        onClick={() => updateProfile('caffeineTotalIntake', opt)}
+                        className={`flex-1 p-2 rounded-lg border text-sm transition-all ${
+                          profile.caffeineTotalIntake === opt ? 'bg-white dark:bg-slate-700 border-orange-500 ring-1 ring-orange-500 text-orange-700 dark:text-orange-300' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600'
+                        }`}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      ),
+      isValid: profile.caffeineYesterday === 'No' || (profile.caffeineYesterday === 'Yes' && !!profile.caffeineLastCup && !!profile.caffeineTotalIntake)
+    },
+    // Q3.5: Alcohol
+    {
+      title: "Did you consume alcohol yesterday?",
+      icon: <Wine className="w-6 h-6 text-red-500" />,
+      content: (
+        <div className="space-y-4">
+          <div className="flex gap-3">
+            {['Yes', 'No'].map(opt => (
+              <button
+                key={opt}
+                onClick={() => updateProfile('alcoholYesterday', opt)}
+                className={`flex-1 p-4 rounded-xl border transition-all font-medium ${
+                  profile.alcoholYesterday === opt ? 'bg-red-50 dark:bg-red-900/20 border-red-500 text-red-700' : 'border-slate-200 dark:border-slate-700 text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                {opt}
+              </button>
+            ))}
+          </div>
+
+          {profile.alcoholYesterday === 'Yes' && (
+             <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl space-y-4 animate-fade-in">
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">How close to bedtime?</label>
+                <div className="grid grid-cols-1 gap-2">
+                  {['With dinner', 'Late night', 'Within 1hr of sleep'].map(opt => (
+                    <button
+                      key={opt}
+                      onClick={() => updateProfile('alcoholCloseToBed', opt)}
+                      className={`p-3 rounded-lg border text-sm transition-all text-left ${
+                        profile.alcoholCloseToBed === opt ? 'bg-white dark:bg-slate-700 border-red-500 ring-1 ring-red-500 text-red-700 dark:text-red-300' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600'
+                      }`}
+                    >
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+          )}
+        </div>
+      ),
+      isValid: profile.alcoholYesterday === 'No' || (profile.alcoholYesterday === 'Yes' && !!profile.alcoholCloseToBed)
+    },
+    // Q3.6: Meal
+    {
+      title: "Did you eat within 3 hours of sleep?",
+      icon: <Utensils className="w-6 h-6 text-amber-500" />,
+      content: (
+        <div className="space-y-4">
+          <div className="flex gap-3">
+            {['Yes', 'No'].map(opt => (
+              <button
+                key={opt}
+                onClick={() => updateProfile('ateWithin3Hours', opt)}
+                className={`flex-1 p-4 rounded-xl border transition-all font-medium ${
+                  profile.ateWithin3Hours === opt ? 'bg-amber-50 dark:bg-amber-900/20 border-amber-500 text-amber-700' : 'border-slate-200 dark:border-slate-700 text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                {opt}
+              </button>
+            ))}
+          </div>
+
+          {profile.ateWithin3Hours === 'Yes' && (
+             <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl space-y-4 animate-fade-in">
+                <label className="block text-sm font-medium text-slate-700 dark:text-slate-300">What was the meal type?</label>
+                <div className="grid grid-cols-1 gap-2">
+                  {['Light (e.g., yogurt, fruit)', 'Heavy (e.g., pasta, meat)', 'Sugary/High-Carb'].map(opt => (
+                    <button
+                      key={opt}
+                      onClick={() => updateProfile('mealType', opt)}
+                      className={`p-3 rounded-lg border text-sm transition-all text-left ${
+                        profile.mealType === opt ? 'bg-white dark:bg-slate-700 border-amber-500 ring-1 ring-amber-500 text-amber-700 dark:text-amber-300' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600'
+                      }`}
+                    >
+                      {opt}
+                    </button>
+                  ))}
+                </div>
+              </div>
+          )}
+        </div>
+      ),
+      isValid: profile.ateWithin3Hours === 'No' || (profile.ateWithin3Hours === 'Yes' && !!profile.mealType)
+    },
+    // Q3.7: Workout
+    {
+      title: "Did you workout today?",
+      icon: <Dumbbell className="w-6 h-6 text-sky-500" />,
+      content: (
+        <div className="space-y-4">
+          <div className="flex gap-3">
+            {['Yes', 'No'].map(opt => (
+              <button
+                key={opt}
+                onClick={() => updateProfile('workoutToday', opt)}
+                className={`flex-1 p-4 rounded-xl border transition-all font-medium ${
+                  profile.workoutToday === opt ? 'bg-sky-50 dark:bg-sky-900/20 border-sky-500 text-sky-700' : 'border-slate-200 dark:border-slate-700 text-slate-600 hover:bg-slate-50'
+                }`}
+              >
+                {opt}
+              </button>
+            ))}
+          </div>
+
+          {profile.workoutToday === 'Yes' && (
+            <div className="p-4 bg-slate-50 dark:bg-slate-800/50 rounded-xl space-y-4 animate-fade-in">
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Intensity?</label>
+                  <div className="flex gap-2">
+                    {['Light/Yoga', 'Moderate/Gym', 'Heavy/HIIT'].map(opt => (
+                      <button
+                        key={opt}
+                        onClick={() => updateProfile('workoutIntensity', opt)}
+                        className={`flex-1 p-2 rounded-lg border text-sm transition-all ${
+                          profile.workoutIntensity === opt ? 'bg-white dark:bg-slate-700 border-sky-500 ring-1 ring-sky-500 text-sky-700 dark:text-sky-300' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600'
+                        }`}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Timing?</label>
+                  <div className="flex gap-2">
+                    {['Morning/Day', 'Late Evening'].map(opt => (
+                      <button
+                        key={opt}
+                        onClick={() => updateProfile('workoutTiming', opt)}
+                        className={`flex-1 p-2 rounded-lg border text-sm transition-all ${
+                          profile.workoutTiming === opt ? 'bg-white dark:bg-slate-700 border-sky-500 ring-1 ring-sky-500 text-sky-700 dark:text-sky-300' : 'bg-white dark:bg-slate-800 border-slate-200 dark:border-slate-700 text-slate-600'
+                        }`}
+                      >
+                        {opt}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+            </div>
+          )}
+        </div>
+      ),
+      isValid: profile.workoutToday === 'No' || (profile.workoutToday === 'Yes' && !!profile.workoutIntensity && !!profile.workoutTiming)
+    },
+    // Q3.8: Sleep Environment
+    {
+      title: "How was your sleep environment?",
+      icon: <Bed className="w-6 h-6 text-indigo-500" />,
+      content: (
+        <div className="grid grid-cols-1 gap-2">
+          {['Pitch Black', 'Dim/Street light leakage', 'TV or Phone screen was on', 'Room felt too hot', 'Noisy environment'].map(opt => (
+            <button
+              key={opt}
+              onClick={() => toggleArrayItem('sleepEnvironment', opt)}
+              className={`w-full p-4 rounded-xl border text-left transition-all flex items-center justify-between ${
+                (profile.sleepEnvironment || []).includes(opt) ? 'bg-indigo-50 dark:bg-indigo-900/20 border-indigo-500 text-indigo-700' : 'border-slate-200 dark:border-slate-700 text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              <span>{opt}</span>
+              {(profile.sleepEnvironment || []).includes(opt) && <Check className="w-4 h-4" />}
+            </button>
+          ))}
+        </div>
+      ),
+      isValid: true
     },
     // Q4: Screen Time
     {

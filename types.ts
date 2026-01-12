@@ -7,6 +7,22 @@ export interface UserProfile {
   typicalBedtimeRoutine: string[];
   averageSleepDuration: string;
   sleepIssues: string[];
+  // New fields added for expanded onboarding questions
+  sleepLastNightHours?: string;
+  sleepLastNightMinutes?: string;
+  sleepQuality?: string; // 1-10
+  currentFeeling?: string; // Exhausted / Alert but tired / Fully refreshed
+  caffeineYesterday?: string; // Yes/No
+  caffeineLastCup?: string; // Morning / Afternoon / Within 6hrs
+  caffeineTotalIntake?: string; // 1 cup / 2-3 cups / 4+
+  alcoholYesterday?: string; // Yes/No
+  alcoholCloseToBed?: string; // With dinner / Late night / Within 1hr
+  ateWithin3Hours?: string; // Yes/No
+  mealType?: string; // Light / Heavy / Sugary
+  workoutToday?: string; // Yes/No
+  workoutIntensity?: string; // Light / Moderate / Heavy
+  workoutTiming?: string; // Morning/Day / Late Evening
+  sleepEnvironment?: string[]; // multiple selections
   aiAnalysis?: string;
 }
 
