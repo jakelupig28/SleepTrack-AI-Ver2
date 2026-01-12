@@ -1,0 +1,7 @@
+{
+  "name": "SleepTrack AI",
+  "description": "An intelligent sleep tracking and analysis platform powered by Gemini. Features include sleep cycle monitoring, AI-driven insights, dream journaling, and ambient noise analysis.",
+  "requestFramePermissions": [
+    "microphone"
+  ]
+}
